@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>农业AI机器人云平台</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background-color: #f2f5f9;
+      color: #333;
+    }
+    .container {
+      width: 95%;
+      max-width: 1600px;
+      margin: 20px auto;
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      grid-template-rows: auto auto;
+      grid-gap: 20px;
+    }
+    .header {
+      grid-column: 1 / span 2;
+      display: flex;
+      align-items: center;
+      padding: 10px 20px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    }
+    .header img {
+      width: 28px;
+      height: 28px;
+      margin-right: 8px;
+    }
+    .header h1 {
+      font-size: 18px;
+      color: #2c3e50;
+    }
+    .header .status {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+    }
+    .header .status .circle {
+      width: 12px;
+      height: 12px;
+      background-color: #28a745;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+    .header .status span {
+      margin-right: 16px;
+      font-size: 14px;
+      color: #555;
+    }
+    .header .status i {
+      font-style: normal;
+      cursor: pointer;
+      margin-right: 12px;
+    }
+
+    .video-card {
+      grid-column: 1;
+      background-color: #ffffff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+    }
+    .video-card .video-header {
+      font-size: 14px;
+      color: #fff;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 6px 12px;
+      z-index: 2;
+    }
+    .video-card .video-header span {
+      display: inline-block;
+      margin-right: 16px;
+    }
+    .video-card img {
+      width: 100%;
+      height: auto;
+      background-color: #000;
+    }
+    .video-card .video-footer {
+      background-color: #ffffff;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      color: #555;
+      border-top: 1px solid #e0e0e0;
+    }
+    .video-card .video-footer div {
+      display: flex;
+      align-items: center;
+    }
+    .video-card .video-footer div i {
+      font-style: normal;
+      margin-right: 4px;
+    }
+
+    .info-section {
+      grid-column: 2;
+      display: flex;
+      flex-direction: column;
+      row-gap: 20px;
+    }
+    .orchard-info {
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 14px 20px;
+      font-size: 14px;
+      color: #333;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    }
+    .orchard-info span {
+      font-weight: bold;
+      margin-right: 24px;
+    }
+
+    .stats-card {
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      row-gap: 16px;
+      column-gap: 16px;
+    }
+    .stats-card .stat-item {
+      background-color: #f9fafb;
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+    }
+    .stats-card .stat-item .number {
+      font-size: 24px;
+      font-weight: bold;
+      color: #2c3e50;
+      margin-bottom: 6px;
+    }
+    .stats-card .stat-item .label {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .chart-card {
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    }
+    .chart-card h3 {
+      font-size: 16px;
+      margin-bottom: 12px;
+      color: #333;
+    }
+    .chart-card canvas {
+      width: 100% !important;
+      height: 240px !important;
+    }
+
+    .table-section {
+      grid-column: 1 / span 2;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-gap: 20px;
+      margin-top: 10px;
+    }
+    .table-card {
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    .table-card h3 {
+      padding: 14px 20px;
+      font-size: 16px;
+      color: #333;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .table-card table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .table-card thead {
+      background-color: #f2f2f2;
+    }
+    .table-card thead th {
+      padding: 10px;
+      font-size: 14px;
+      color: #555;
+      text-align: left;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .table-card tbody tr:nth-child(odd) {
+      background-color: #fafafa;
+    }
+    .table-card tbody td {
+      padding: 10px;
+      font-size: 14px;
+      color: #555;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .table-card img {
+      width: 60px;
+      height: 40px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+    .table-card a {
+      color: #1e88e5;
+      text-decoration: none;
+    }
+    .table-card a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <img src="https://img.icons8.com/ios-filled/50/28a745/leaf.png" alt="logo" />
+    <h1>农业AI机器人云平台</h1>
+    <div class="status">
+      <div class="circle"></div>
+      <span>在线</span>
+      <i title="设置">⚙️</i>
+      <i title="消息通知">🔔</i>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="video-card">
+      <div class="video-header">
+        <span>实时巡检画面</span>
+        <span>果园区域 A - 机器狗 ID: RG-001</span>
+      </div>
+      <!-- 使用 ROS 视频流的 img 标签 -->
+      <img 
+        src="http://192.168.116.1:5000/stream?topic=/yolov8/image_raw&quality=100"
+        alt="实时视频流"
+      />
+      <div class="video-footer">
+        <div><i>📍</i><span id="location">北纬 30.2672°，东经 120.1536°</span></div>
+        <div><i>🌡️</i><span id="temp">模块温度: 92%</span></div>
+        <div><i>📶</i><span id="signal">信号强度: 92%</span></div>
+        <div><i>🔋</i><span id="battery">电池: 78%</span></div>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <div class="orchard-info">
+        <span>当前果园：果园A1区</span>
+        <span>设备编号：RG-001</span>
+      </div>
+      <div class="stats-card">
+        <div class="stat-item"><div class="number" id="totalCount">1286</div><div class="label">果实数量 (个)</div></div>
+        <div class="stat-item"><div class="number" id="matureRate">75%</div><div class="label">成熟比例</div></div>
+        <div class="stat-item"><div class="number" id="badCount">89</div><div class="label">坏果数量 (个)</div></div>
+        <div class="stat-item"><div class="number" id="matureCount">873</div><div class="label">成熟数量 (个)</div></div>
+      </div>
+      <div class="chart-card">
+        <h3>果径大小分布</h3>
+        <canvas id="diameterChart"></canvas>
+      </div>
+    </div>
+
+    <div class="table-section">
+      <div class="table-card">
+        <h3>巡园记录</h3>
+        <table>
+          <thead>
+            <tr><th>开始时间</th><th>设备编号</th><th>果园位置</th><th>识别对象</th><th>工作时长</th><th>异常情况 (次)</th></tr>
+          </thead>
+          <tbody id="patrolRecords">
+            <tr><td>2025-07-03 10:23</td><td>RG-001</td><td>果园 A1</td><td>蜜瓜88</td><td>38分钟</td><td>284</td></tr>
+            <tr><td>2025-06-22 10:23</td><td>RG-003</td><td>果园 A3</td><td>牛排番茄</td><td>57分钟</td><td>487</td></tr>
+            <tr><td>2025-03-03 10:23</td><td>RG-002</td><td>区域 C</td><td>天使之茄</td><td>47分钟</td><td>323</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-card">
+        <h3>异常监测</h3>
+        <table>
+          <thead><tr><th>图片</th><th>异常类型</th><th>果园位置</th></tr></thead>
+          <tbody id="anomalyRecords">
+            <tr><td><img src="https://via.placeholder.com/60x40?text=病害" alt="病害" /></td><td>病害</td><td>果园A1区</td></tr>
+            <tr><td><img src="https://via.placeholder.com/60x40?text=虫害" alt="虫害" /></td><td>虫害</td><td>果园A2区</td></tr>
+            <tr><td><img src="https://via.placeholder.com/60x40?text=虫害" alt="虫害" /></td><td>虫害</td><td>果园A3区</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ctx = document.getElementById("diameterChart").getContext("2d");
+    const diameterChart = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: ["2cm以下", "2-3cm", "3-4cm", "5cm以上"],
+        datasets: [{
+          label: "数量 (个)",
+          data: [39, 76, 49, 18],
+          backgroundColor: "#42a5f5",
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            ticks: { color: "#555", font: { size: 14 } },
+            grid: { display: false }
+          },
+          y: {
+            beginAtZero: true,
+            ticks: { color: "#555", font: { size: 14 } },
+            grid: { color: "#e0e0e0" }
+          }
+        },
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+
+    function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function updateStats() {
+      const total = randomInt(1000, 2000);
+      const matureRateNum = randomInt(50, 100);
+      const bad = randomInt(50, 200);
+      const matureCount = Math.floor((total * matureRateNum) / 100);
+      document.getElementById("totalCount").textContent = total;
+      document.getElementById("matureRate").textContent = matureRateNum + "%";
+      document.getElementById("badCount").textContent = bad;
+      document.getElementById("matureCount").textContent = matureCount;
+    }
+
+    function updateChartData() {
+      const newData = [randomInt(10, 80), randomInt(20, 100), randomInt(20, 80), randomInt(5, 50)];
+      diameterChart.data.datasets[0].data = newData;
+      diameterChart.update();
+    }
+
+    function updateVideoFooter() {
+      const tempVal = randomInt(50, 100);
+      const sigVal = randomInt(50, 100);
+      const battVal = randomInt(30, 100);
+      document.getElementById("temp").textContent = "模块温度: " + tempVal + "%";
+      document.getElementById("signal").textContent = "信号强度: " + sigVal + "%";
+      document.getElementById("battery").textContent = "电池: " + battVal + "%";
+    }
+
+    setInterval(() => {
+      updateStats();
+      updateChartData();
+      updateVideoFooter();
+    }, 5000);
+
+    updateStats();
+    updateChartData();
+    updateVideoFooter();
+  </script>
+</body>
+</html>
+
