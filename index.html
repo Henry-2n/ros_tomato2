@@ -5,11 +5,12 @@
   <title>农业AI机器人云平台</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+    
     body {
       font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
       background-color: #f2f5f9;
@@ -85,11 +86,34 @@
       display: inline-block;
       margin-right: 16px;
     }
-    .video-card img {
+
+    /* 视频裁剪容器 & fallback 样式 */
+    .video-crop-container {
       width: 100%;
-      height: auto;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      position: relative;
       background-color: #000;
     }
+    .video-crop-container img,
+    .video-crop-container .fallback {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+    }
+    .video-crop-container img {
+      object-fit: cover;
+    }
+    .video-crop-container .fallback {
+      display: none;
+      background-color: #000;
+      color: #fff;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     .video-card .video-footer {
       background-color: #ffffff;
       padding: 10px 14px;
@@ -250,15 +274,25 @@
         <span>实时巡检画面</span>
         <span>果园区域 A - 机器狗 ID: RG-001</span>
       </div>
-      <!-- 使用 ROS 视频流的 img 标签 -->
-      <img 
-        src="http://192.168.209.1:5000/stream?topic=/yolov8/image_raw&quality=100"
-        alt="实时视频流"
-      />
+
+      <!-- 完整视频 + fallback 结构 -->
+      <div class="video-crop-container">
+        <img
+          id="streamImg"
+          src="http://192.168.209.1:5000/stream?topic=/yolov8/image_raw&quality=95"
+          alt="实时视频流"
+          onerror="handleStreamError()"
+          onload="handleStreamSuccess()"
+        />
+        <div class="fallback" id="streamFallback">
+          <span>视频连接断开</span>
+        </div>
+      </div>
+
       <div class="video-footer">
         <div><i>📍</i><span id="location">北纬 30.2672°，东经 120.1536°</span></div>
         <div><i>🌡️</i><span id="temp">模块温度: 92%</span></div>
-        <div><i>📶</i><span id="signal">信号强度: 92%</span></div>
+        <div><i>�</i><span id="signal">信号强度: 92%</span></div>
         <div><i>🔋</i><span id="battery">电池: 78%</span></div>
       </div>
     </div>
@@ -266,13 +300,25 @@
     <div class="info-section">
       <div class="orchard-info">
         <span>当前果园：果园A1区</span>
-        <span>设备编号：RG-001</span>
+        <span>番茄品种：釜山88</span>
       </div>
       <div class="stats-card">
-        <div class="stat-item"><div class="number" id="totalCount">1286</div><div class="label">果实数量 (个)</div></div>
-        <div class="stat-item"><div class="number" id="matureRate">75%</div><div class="label">成熟比例</div></div>
-        <div class="stat-item"><div class="number" id="badCount">89</div><div class="label">坏果数量 (个)</div></div>
-        <div class="stat-item"><div class="number" id="matureCount">873</div><div class="label">成熟数量 (个)</div></div>
+        <div class="stat-item">
+          <div class="number" id="totalCount">1286</div>
+          <div class="label">果实数量 (个)</div>
+        </div>
+        <div class="stat-item">
+          <div class="number" id="matureRate">75%</div>
+          <div class="label">成熟比例</div>
+        </div>
+        <div class="stat-item">
+          <div class="number" id="badCount">89</div>
+          <div class="label">坏果数量 (个)</div>
+        </div>
+        <div class="stat-item">
+          <div class="number" id="matureCount">873</div>
+          <div class="label">成熟数量 (个)</div>
+        </div>
       </div>
       <div class="chart-card">
         <h3>果径大小分布</h3>
@@ -285,23 +331,69 @@
         <h3>巡园记录</h3>
         <table>
           <thead>
-            <tr><th>开始时间</th><th>设备编号</th><th>果园位置</th><th>识别对象</th><th>工作时长</th><th>异常情况 (次)</th></tr>
+            <tr>
+              <th>开始时间</th>
+              <th>设备编号</th>
+              <th>果园位置</th>
+              <th>识别对象</th>
+              <th>工作时长</th>
+              <th>异常情况 (次)</th>
+            </tr>
           </thead>
           <tbody id="patrolRecords">
-            <tr><td>2025-07-03 10:23</td><td>RG-001</td><td>果园 A1</td><td>蜜瓜88</td><td>38分钟</td><td>284</td></tr>
-            <tr><td>2025-06-22 10:23</td><td>RG-003</td><td>果园 A3</td><td>牛排番茄</td><td>57分钟</td><td>487</td></tr>
-            <tr><td>2025-03-03 10:23</td><td>RG-002</td><td>区域 C</td><td>天使之茄</td><td>47分钟</td><td>323</td></tr>
+            <tr>
+              <td>2025-07-03 10:23</td>
+              <td>RG-001</td>
+              <td>果园 A1</td>
+              <td>釜山88</td>
+              <td>38分钟</td>
+              <td>21</td>
+            </tr>
+            <tr>
+              <td>2025-06-22 10:23</td>
+              <td>RG-003</td>
+              <td>果园 A3</td>
+              <td>牛排番茄</td>
+              <td>57分钟</td>
+              <td>23</td>
+            </tr>
+            <tr>
+              <td>2025-03-03 10:23</td>
+              <td>RG-002</td>
+              <td>区域 C</td>
+              <td>天使之唇</td>
+              <td>47分钟</td>
+              <td>18</td>
+            </tr>
           </tbody>
         </table>
       </div>
       <div class="table-card">
         <h3>异常监测</h3>
         <table>
-          <thead><tr><th>图片</th><th>异常类型</th><th>果园位置</th></tr></thead>
+          <thead>
+            <tr>
+              <th>图片</th>
+              <th>异常类型</th>
+              <th>果园位置</th>
+            </tr>
+          </thead>
           <tbody id="anomalyRecords">
-            <tr><td><img src="https://via.placeholder.com/60x40?text=病害" alt="病害" /></td><td>病害</td><td>果园A1区</td></tr>
-            <tr><td><img src="https://via.placeholder.com/60x40?text=虫害" alt="虫害" /></td><td>虫害</td><td>果园A2区</td></tr>
-            <tr><td><img src="https://via.placeholder.com/60x40?text=虫害" alt="虫害" /></td><td>虫害</td><td>果园A3区</td></tr>
+            <tr>
+              <td><img src="./images/1.jpeg" alt="病害" /></td>
+              <td>病害</td>
+              <td>果园A1区</td>
+            </tr>
+            <tr>
+              <td><img src="./images/2.jpeg" alt="虫害" /></td>
+              <td>虫害</td>
+              <td>果园A2区</td>
+            </tr>
+            <tr>
+              <td><img src="./images/3.jpeg" alt="虫害" /></td>
+              <td>虫害</td>
+              <td>果园A3区</td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -370,6 +462,24 @@
       document.getElementById("battery").textContent = "电池: " + battVal + "%";
     }
 
+    // 处理视频加载错误
+    const img = document.getElementById('streamImg');
+    const fallback = document.getElementById('streamFallback');
+    function handleStreamError() {
+      img.style.display = 'none';
+      fallback.style.display = 'flex';
+    }
+    function handleStreamSuccess() {
+      img.style.display = 'block';
+      fallback.style.display = 'none';
+    }
+    // 定时重试加载
+    setInterval(() => {
+      if (fallback.style.display === 'flex') {
+        img.src = img.src.split('?')[0] + '?t=' + Date.now();
+      }
+    }, 5000);
+
     setInterval(() => {
       updateStats();
       updateChartData();
@@ -382,4 +492,3 @@
   </script>
 </body>
 </html>
-
