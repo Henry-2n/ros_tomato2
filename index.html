@@ -279,7 +279,7 @@
       <div class="video-crop-container">
         <img
           id="streamImg"
-          src="http://192.168.209.1:5000/stream?topic=/yolov8/image_raw&quality=95"
+          src="http://192.168.209.187:5000/stream?topic=/usb_cam/image_raw&quality=95"
           alt="实时视频流"
           onerror="handleStreamError()"
           onload="handleStreamSuccess()"
@@ -401,6 +401,10 @@
   </div>
 
   <script>
+    // 添加全局变量跟踪当前值
+    let currentTotal = 0;
+    let currentBad = 0;
+    
     const ctx = document.getElementById("diameterChart").getContext("2d");
     const diameterChart = new Chart(ctx, {
       type: "bar",
@@ -437,13 +441,32 @@
     }
 
     function updateStats() {
-      const total = randomInt(1000, 2000);
-      const matureRateNum = randomInt(50, 100);
-      const bad = randomInt(50, 200);
-      const matureCount = Math.floor((total * matureRateNum) / 100);
-      document.getElementById("totalCount").textContent = total;
+      // 如果total未达到500，则继续增加
+      if (currentTotal < 500) {
+        // 以十位数随机增加(10-90)
+        currentTotal += randomInt(1, 9) * 10;
+        // 如果超过1000，归零
+        if (currentTotal > 1000) {
+          currentTotal = 0;
+        }
+      }
+      
+      // 如果bad未达到10，则继续增加
+      if (currentBad < 10) {
+        // 以个位数随机增加(1-9)
+        currentBad += randomInt(1, 9);
+        // 如果超过10，归零
+        if (currentBad > 10) {
+          currentBad = 0;
+        }
+      }
+      
+      const matureRateNum = randomInt(80, 90);
+      const matureCount = Math.floor((currentTotal * matureRateNum) / 100);
+      
+      document.getElementById("totalCount").textContent = currentTotal;
       document.getElementById("matureRate").textContent = matureRateNum + "%";
-      document.getElementById("badCount").textContent = bad;
+      document.getElementById("badCount").textContent = currentBad;
       document.getElementById("matureCount").textContent = matureCount;
     }
 
@@ -481,10 +504,13 @@
     }, 5000);
 
     setInterval(() => {
-      updateStats();
       updateChartData();
       updateVideoFooter();
     }, 5000);
+
+    setInterval(() => {
+      updateStats();
+    }, 10000);
 
     updateStats();
     updateChartData();
